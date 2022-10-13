@@ -1,4 +1,5 @@
 import lang from '../dojo/_base/lang'
+import Logger from './Logger'
 
 class ModelUtil {
 
@@ -27,6 +28,27 @@ class ModelUtil {
             'borderLeftColor'
         ].map(t => 'dt-' + t)
     }
+
+    
+    getAllGroupChildren (group, model) {
+        if (!group.children) {
+          return []
+        }
+        let result = group.children.slice(0)
+        if (group.groups) {
+          group.groups.forEach(subId => {
+            const sub = model.groups[subId]
+            if (sub) {
+              const children = this.getAllGroupChildren(sub, model)
+              result = result.concat(children)
+            } else {
+              console.warn('ModelUtil.getAllGroupChildren() No sub group', subId)
+            }
+          })
+        }
+        return result
+    }
+  
 
     scaleToSelection(box, pos, type = '') {
         // for top and bottom we scale by height, otherwise by width
@@ -175,7 +197,7 @@ class ModelUtil {
          * We set the template modfied date, so in RenderFlow we 
          * can recognize that we have to update the widget.
          */
-        if (model.templates) {
+        if (model && model.templates) {
             for (let widgetID in model.widgets) {
                 const widget = model.widgets[widgetID]
                 if (widget.template) {
@@ -298,22 +320,27 @@ class ModelUtil {
         return Object.values(model.templates).filter(t => t.variantOf === template.id)
     } 
 
-    createScalledModel(model, zoom) {
+    createScalledModel(model, zoom, round = true) {
+
+        if (!round) {
+            Logger.log(1, 'ModelUtil.createScalledModel() > do not round!')
+        }
 
         const zoomedModel = lang.clone(model);
         zoomedModel.isZoomed = true;
 
-        this.getZoomedBox(zoomedModel.screenSize, zoom, zoom);
+        this.getZoomedBox(zoomedModel.screenSize, zoom, zoom, round);
 
         for (let id in zoomedModel.widgets) {
-            this.getZoomedBox(zoomedModel.widgets[id], zoom, zoom);
+            this.getZoomedBox(zoomedModel.widgets[id], zoom, zoom, round);
         }
 
         for (let id in zoomedModel.screens) {
-            var zoomedScreen = this.getZoomedBox(
+            const zoomedScreen = this.getZoomedBox(
                 zoomedModel.screens[id],
                 zoom,
-                zoom
+                zoom,
+                round
             );
 
             /**
@@ -333,8 +360,8 @@ class ModelUtil {
                      * When we copy a screen we might not have the org widget yet
                      */
                     var orgScreen = model.screens[zoomedScreen.id];
-                    var difX = this.getZoomed(orgWidget.x - orgScreen.x, zoom);
-                    var difY = this.getZoomed(orgWidget.y - orgScreen.y, zoom);
+                    var difX = this.getZoomed(orgWidget.x - orgScreen.x, zoom, round);
+                    var difY = this.getZoomed(orgWidget.y - orgScreen.y, zoom, round);
                     if (orgWidget.parentWidget) {
                         if (zoomWidget.x >= 0) {
                             zoomWidget.x = zoomedScreen.x + difX;
@@ -353,15 +380,14 @@ class ModelUtil {
         for (let id in zoomedModel.lines) {
             let line = zoomedModel.lines[id];
             for (let i = 0; i < line.points.length; i++) {
-                this.getZoomedBox(line.points[i], zoom, zoom);
+                this.getZoomedBox(line.points[i], zoom, zoom, round);
             }
         }
-
 
         return zoomedModel;
     }
 
-
+   
     getZoomedBox(box, zoomX, zoomY, round = true) {
         if (box.x) {
             box.x = this.getZoomed(box.x, zoomX, round);

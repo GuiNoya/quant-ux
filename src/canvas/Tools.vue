@@ -102,7 +102,7 @@ export default {
 			this.logger.log(0,"onToolTextEnd", "enter > ");
 			this.stopEvent(e);
 
-			var pos = this._getSelectionToolBox();
+			let pos = this._getSelectionToolBox();
 			let noBox = false
 			if (!pos) {
 				/**
@@ -112,7 +112,7 @@ export default {
 				pos = this.getCanvasMousePosition(e);
 				pos.w = this.getZoomed(1000, this.zoom);
 				pos.h = this.getZoomed(20, this.zoom);
-				var lastText = this.controller.getLastChangedWidget("Label");
+				const lastText = this.controller.getLastChangedWidget("Label");
 				if (lastText) {
 					pos.h = this.getZoomed(lastText.h, this.zoom);
 				}
@@ -170,7 +170,7 @@ export default {
 				};
 
 				if (this.controller){
-					var lastText = this.controller.getLastChangedWidget("Label");
+					const lastText = this.controller.getLastChangedWidget("Label");
 					if (lastText && lastText.style){
 						if (lastText.style.color){
 							widget.style.color = lastText.style.color;
@@ -181,7 +181,7 @@ export default {
 					}
 				}
 
-				var newWidget = this.controller.addWidget(widget, pos, true);
+				const newWidget = this.controller.addWidget(widget, pos, true);
 				if (newWidget) {
 
 					if (noBox !== true) {
@@ -227,15 +227,23 @@ export default {
 
 		onToolBoxStart (e){
 
+
 			this.stopEvent(e);
 			this.unSelect();
 			this.cleanUpSelectionListener();
 
 
-			this.alignmentStart("grid", null, null, null, false);
+			this.alignmentStart("grid", null, null, null, true);
 
 			this._selectionToolStart = this.getCanvasMousePosition(e);
 			this._selectionToolStart = this.allignPosition(this._selectionToolStart, e)
+			
+			if (this._alignmentTool) {
+				this._alignmentTool.startPos = this._selectionToolStart
+				this._alignmentTool.allowShift = true
+			}
+			
+			
 
 			this.initToolMouseMoveListener("MatcAddTool");
 			this._selectionToolUpListener = on(win.body(),"mouseup", lang.hitch(this,"onToolBoxEnd"));
@@ -347,6 +355,11 @@ export default {
 			this.alignmentStart("grid");
 
 			this._selectionToolStart = this.allignPosition(this.getCanvasMousePosition(e), e);
+			if (this._alignmentTool) {
+				this._alignmentTool.startPos = this._selectionToolStart
+				this._alignmentTool.allowShift = true
+			}
+			
 
 			this._selectionToolMoveListener = on(win.body(),"mousemove", lang.hitch(this,"onTooltMove", "MatcHotspotTool"));
 			this._selectionToolUpListener = on(win.body(),"mouseup", lang.hitch(this,"onToolHotspotEnd"));
@@ -434,13 +447,13 @@ export default {
 
 				if(!window.requestAnimationFrame){
 					console.warn("No requestAnimationFrame()");
-						this._renderToolMove(css);
-					} else {
-						var callback = lang.hitch(this, "_renderToolMove",css);
-							requestAnimationFrame(callback);
-					}
+					this._renderToolMove(css);
+				} else {
+					const callback = lang.hitch(this, "_renderToolMove",css);
+					requestAnimationFrame(callback);
+				}
 			} else {
-				var pos = this.getCanvasMousePosition(e);
+				const pos = this.getCanvasMousePosition(e);
 				pos.w = 1;
 				pos.h = 1;
 				this._selectionToolInit = this.allignPosition(pos, e);

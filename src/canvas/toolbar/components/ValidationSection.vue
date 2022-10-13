@@ -95,6 +95,10 @@ export default {
 			this._renderDataBinding(model);
 		},
 
+		_showIconToggleButton (model){
+			this._renderDataBinding(model);
+		},
+
 		_showButton (model){
 			this._renderDataBinding(model, false);
 		},
@@ -372,10 +376,6 @@ export default {
 			val.date = null;
 			this.emit("propertyChange", "validation", val);
 		},
-
-
-
-
 
 		getErrorLabels (model){
 			var errorLabels = this.getRef(model, "errorLabels");

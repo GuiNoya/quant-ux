@@ -43,6 +43,7 @@ import TextProperties from 'canvas/toolbar/components/TextProperties'
 import BackdropFilter from 'canvas/toolbar/components/BackdropFilter'
 import Filter from 'canvas/toolbar/components/Filter'
 import ConditionalStyleButton from 'canvas/toolbar/components/ConditionalStyleButton'
+import TooltipSection from 'canvas/toolbar/components/TooltipSection'
 
 import DesignTokenBtn from 'canvas/toolbar/components/DesignTokenBtn'
 import DesignTokenList from 'canvas/toolbar/components/DesignTokenList'
@@ -61,7 +62,8 @@ export default {
 						"CheckBox", "RadioBox", "RadioBox2", "HSlider", "Spinner", "Switch", "DragNDrop", "Date", "DateDropDown", "Icon", "Table", "Rating",
 						"IconToggle","HoverDropDown", "ImageCarousel", "Stepper", "TypeAheadTextBox", "BarChart", "RingChart", "PieChart", "MultiRingChart",
 						"LabeledIconToggle", "LogicOr", "CheckBoxGroup", "RadioGroup", "Repeater", "Camera", "Rest", 'LockSlider',
-						'ProgressBar', 'ScreenSegment', 'CountingStepper', "Tree", "VerticalNavigation", 'IconButton', 'Timeline', 'VisualPicker', 'Script'],
+						'ProgressBar', 'ScreenSegment', 'CountingStepper', "Tree", "VerticalNavigation", 'IconButton', 'Timeline', 'VisualPicker', 
+						'Script', 'IconToggleButton'],
 			hasActiveData: ["DateDropDown"],
 			// validation == databining
 			hasValidation : ["TextBox", "TextArea", "TypeAheadTextBox", "Password", "CheckBox", "Switch", "Date", "DateDropDown",
@@ -69,14 +71,14 @@ export default {
 							"IconToggle", "TypeAheadTextBox", "ToggleButton", "CheckBoxGroup", "RadioGroup",
 							"RadioBox2", "Upload", "Camera", "UploadPreview", 'Repeater', 'ProgressBar', 'ImageCarousel',
 							'RingChart', 'BarChart', 'PieChart', 'MultiRingChart', 'CountingStepper', 'Tree', 'VerticalNavigation',
-							'Table', 'Paging', 'Timeline', 'LabeledIconToggle', 'VisualPicker', 'LockSlider'],
+							'Table', 'Paging', 'Timeline', 'LabeledIconToggle', 'VisualPicker', 'LockSlider', 'IconToggleButton'],
 			hasLogic2: ["LogicOr", "Rest", "Script"],
 			hasErrorViewMode : ["TextBox", "Password", "CheckBox", "Switch", "DropDown", "MobileDropDown", "DateDropDown", "TypeAheadTextBox"],
 			hasFocusViewMode : ["TextBox", "Password", "DropDown", "MobileDropDown", "TextArea", "TypeAheadTextBox"],
 			hasCheckedViewMode : ["CheckBox", "RadioBox", "RadioBox2"],
-			hasActiveViewMode : ["SegmentButton", "ToggleButton","VolumeSlider", "Tree", "VerticalNavigation", 'Paging', 'Upload'],
-			hasHoverViewMode: ["Box", "Button", "Label", "ToggleButton", "DragNDrop", "Upload", "WebLink", "Tree", 
-								"VerticalNavigation", "Stepper", "Paging", "VisualPicker"],
+			hasActiveViewMode : ["SegmentButton", "ToggleButton","VolumeSlider", "Tree", "VerticalNavigation", 'Paging', 'Upload', 'IconToggleButton'],
+			hasHoverViewMode: ["Box", "Button", "Label", "ToggleButton", "DragNDrop", "Upload", "WebLink", "Tree", "Camera",
+								"VerticalNavigation", "Stepper", "Paging", "VisualPicker", 'IconToggleButton', 'IconButton'],
 			hasPopupViewMode: ["DropDown", "DateDropDown", "MobileDropDown"],
 			hasValign: ["Box", "Button", "Label", "Upload", "WebLink", "IconButton", "Paging", "ToggleButton", "SegmentButton", "SegmentPicker"],
 			hasRotate: ['Image', 'Icon'],
@@ -285,6 +287,8 @@ export default {
 
 			this._renderValidation();
 
+			this._renderWidgetToolTip();
+
 			this._renderWidgetView();
 
 			this._renderWidgetBackground();
@@ -426,14 +430,11 @@ export default {
 			css.add(content, "");
 			parent.appendChild(content);
 
-
-
 			this.designTokenList = this.$new(DesignTokenList)
 			this.designTokenList.placeAt(content)
 			this.own(on(this.designTokenList, "change", lang.hitch(this, "changeDesignToken")));
 			this.own(on(this.designTokenList, "remove", lang.hitch(this, "removeDesignToken")));
 			this.designTokenList.setFontFamilies(this._getFontFamilies());
-
 
 			this.properties.appendChild(parent);
 			this.designTokenDiv = parent;
@@ -448,13 +449,10 @@ export default {
 			css.add(content, "MatcToolbarSectionContent");
 			parent.appendChild(content);
 
-
 			this.designTokenExport = this.$new(CSSExporter);
 			this.designTokenExport.setHash(this.hash);
 			this.designTokenExport.setModel(this.model);
 			this.designTokenExport.placeAt(content);
-
-
 
 			this.properties.appendChild(parent);
 			this.designTokenDownloadDiv = parent;
@@ -514,7 +512,7 @@ export default {
 
 			this.groupPositionCheckBox = this.$new(CheckBox);
 			this.groupPositionCheckBox.setLabel("Fixed In Simulator");
-			this.addTooltip(this.groupPositionCheckBox.domNode, "The element will not scroll in the simualtor.")
+			this.addTooltip(this.groupPositionCheckBox.domNode, "The element will not scroll in the simulator.")
 			css.add(this.groupPositionCheckBox.domNode, "MatcToolbarItem");
 			this.own(on(this.groupPositionCheckBox, "change", lang.hitch(this, "setWidgetStyle", "fixed")));
 			this.groupPositionCheckBox.placeAt(content)
@@ -673,9 +671,9 @@ export default {
 
 		_renderWidgetResponsive (){
 
-			var parent = this.createSection("Constraints", true);
+			const parent = this.createSection("Constraints", true);
 
-			var content = document.createElement("div");
+			const content = document.createElement("div");
 			css.add(content, "MatcToolbarSectionContent");
 			parent.appendChild(content);
 
@@ -687,7 +685,7 @@ export default {
 
 			this.positionCheckBox = this.$new(CheckBox);
 			this.positionCheckBox.setLabel("Fixed In Simulator");
-			this.addTooltip(this.positionCheckBox.domNode, "The element will not scroll in the simualtor.")
+			this.addTooltip(this.positionCheckBox.domNode, "The element will not scroll in the simulator.")
 			css.add(this.positionCheckBox.domNode, "MatcToolbarItem");
 			this.own(on(this.positionCheckBox, "change", lang.hitch(this, "setWidgetStyle", "fixed")));
 			this.positionCheckBox.placeAt(content)
@@ -701,8 +699,8 @@ export default {
 			/**
 			* LowCode
 			*/
-			var parent = this.createSection("Rendering", true);
-			var content = document.createElement("div");
+			let parent = this.createSection("Rendering", true);
+			let content = document.createElement("div");
 			css.add(content, "MatcToolbarSectionContent");
 			parent.appendChild(content);
 
@@ -834,6 +832,29 @@ export default {
 
 			this.properties.appendChild(parent);
 			this.lineDiv = parent;
+		},
+
+		_renderWidgetToolTip (cssProps = ['tooltipBackground', 'tooltipColor', 'tooltipFontSize']) {
+
+
+
+			this.designTokenTooltipBtn = this.createDesignTokenBtn('tooltip', cssProps)
+
+			var parent = this.createSection("Tooltip", true, this.designTokenTooltipBtn);
+
+			var content = document.createElement("div");
+			css.add(content, "MatcToolbarSectionContent");
+			parent.appendChild(content);
+
+			this.tooltipSettings = this.$new(TooltipSection)
+			this.tooltipSettings.setModel(this.model)
+			this.tooltipSettings.placeAt(content)
+			this.tooltipSettings.setCssProps(cssProps);
+			this.own(on(this.tooltipSettings, "onChangeStyle", lang.hitch(this, "setWidgetMultiStyle")));
+			this.own(on(this.tooltipSettings, "onChangeText", lang.hitch(this, "setWidgetProps", "tooltipText")));
+
+			this.properties.appendChild(parent);
+			this.tooltipDiv = parent;
 		},
 
 
@@ -1125,7 +1146,7 @@ export default {
 
 			this.multiPositionCheckBox = this.$new(CheckBox);
 			this.multiPositionCheckBox.setLabel("Fixed In Simulator");
-			this.addTooltip(this.multiPositionCheckBox.domNode, "The element will not scroll in the simualtor.")
+			this.addTooltip(this.multiPositionCheckBox.domNode, "The element will not scroll in the simulator.")
 			css.add(this.multiPositionCheckBox.domNode, "MatcToolbarItem");
 			this.own(on(this.multiPositionCheckBox, "change", lang.hitch(this, "setWidgetStyle", "fixed")));
 			this.multiPositionCheckBox.placeAt(content)
@@ -1320,7 +1341,7 @@ export default {
 
 			this.screenSegmentCheckbox = this.$new(CheckBox);
 			this.screenSegmentCheckbox.setLabel("Segment");
-			this.addTooltip(this.screenSegmentCheckbox.domNode, "The screen can be imcluded in others")
+			this.addTooltip(this.screenSegmentCheckbox.domNode, "The screen can be included in others")
 			css.add(this.screenSegmentCheckbox.domNode, "MatcToolbarItem");
 			this.own(on(this.screenSegmentCheckbox, "change", lang.hitch(this, "setScreenSegement", "segment")));
 			this.screenSegmentCheckbox.placeAt(item)
@@ -1342,7 +1363,7 @@ export default {
 
 			this.screenFixedOverlayCheckBox = this.$new(CheckBox);
 			this.screenFixedOverlayCheckBox.setLabel("Fixed as overlay");
-			this.addTooltip(this.screenFixedOverlayCheckBox.domNode, "The element will not scroll in the simualtor when shows as overlay")
+			this.addTooltip(this.screenFixedOverlayCheckBox.domNode, "The element will not scroll in the simulator when shows as overlay")
 			css.add(this.screenFixedOverlayCheckBox.domNode, "MatcToolbarItem");
 			this.own(on(this.screenFixedOverlayCheckBox, "change", lang.hitch(this, "setScreenStyle", "fixed")));
 			this.screenFixedOverlayCheckBox.placeAt(item)

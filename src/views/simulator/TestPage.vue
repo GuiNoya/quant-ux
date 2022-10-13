@@ -15,13 +15,13 @@
 						<div v-if="step > 2">
 							<div class="MatcTestContent" v-if="step === 6">
 								<div class="MatcTestContentCntr">
-									<h2>Password</h2>
-									<p>
-										Please enter the password
+									<h2>{{getNLS("simulator.password.title")}} </h2>
+									<p v-html="getNLS('simulator.password.msg')">
+										
 									</p>
 									<input v-model="password" class="form-control" @keypress.enter="setPassword"/>
 									<div class="MatcButton MatcMarginTop" @click="setPassword()">
-											Next
+										{{getNLS("simulator.password.next")}}
 									</div>
 									<span class="MatcError" style="margin-left:20px">
 										{{passwordError}}
@@ -32,32 +32,30 @@
 							</div>
 							<div class="MatcTestContent" v-if="step === 3">
 								<div class="MatcTestContentCntr">
-									<h2>Welcome!</h2>
+									<h2> {{getNLS("simulator.welcome.title")}} !</h2>
 									<p v-if="settings.description">
 										{{settings.description}}
 									</p>
-									<p v-else>
-										You were invited for a usability test of the "{{model.name}}" application.
-										You can try out the prototype by clicking on the <b>Start Prototype</b> button.
+									<p v-else v-html="getNlSWithReplacement('simulator.welcome.msg', {'name': model.name})">
 									</p>
-									<p>
-										{{getPricacy()}}
+									<p v-html="getNLS('simulator.welcome.privacy')">
+										
 									</p>
 								</div>
 								<div class="MatcMarginTop">
 									<div class="MatcButton MatcTestStartButton"	@click="renderTest()"	v-if="getUserTasks().length === 0">
-											Start Prototype
-										</div>
+											{{getNLS("simulator.welcome.start")}}
+									</div>
 									<div class="MatcButton MatcTestStartButton"	@click="renderTasks()" v-else>
-											Show Tasks
+											{{getNLS("simulator.welcome.showTasks")}}
 									</div>
 								</div>
 							</div>
 							<div class="MatcTestContent" v-if="step === 4">
 								<div class="MatcTestContentCntr">
-									<h2>Tasks!</h2>
+									<h2>{{getNLS("simulator.tasks.title")}} !</h2>
 									<p>
-										Please perform the following tasks.
+										{{getNLS("simulator.tasks.msg")}}
 									</p>
 									<div v-for="t in getUserTasks()" :key="t.id">
 										<h3>{{t.name}}</h3>
@@ -69,7 +67,7 @@
 
 								<div class="MatcMarginTop">
 									<div class="MatcButton MatcTestStartButton" @click="renderTest()">
-											Start Prototype
+										{{getNLS("simulator.welcome.start")}}
 									</div>
 								</div>
 							</div>
@@ -84,9 +82,9 @@
 	</div>
 	<div  class="MatcTestCntr">
 		<div class="MatcTestTaskCntr MatcTestContent" ref="tastCntr" v-if="showTasks">
-			<h1>Tasks</h1>
+			<h1>{{getNLS("simulator.tasks.title")}} </h1>
 			<p>
-				Please perfrom the following tasks
+				{{getNLS("simulator.tasks.msg")}}
 			</p>
 			<div v-for="(t,i) in getUserTasks()" :key="t.id" :class="{'MatcTestTaskDone':taskDone[t.id] }">
 					<h3>#{{i+1}} - {{t.name}} <span class="mdi mdi-check-circle" v-if="taskDone[t.id]"/> </h3>
@@ -179,10 +177,12 @@ export default {
     methods: {
       	postCreate () {
 			this.logger = new Logger('TestPage');
-			var hash = this.getHashFromUri();
+			const hash = this.getHashFromUri();
 			this.logger.log(2,"postCreate","enter", hash);
-			let log = this.$route.query.log
+			const log = this.$route.query.log
 			this.analytics = new Analytics()
+
+			this.initNLS()
 
 			/**
 			 * If test is loaded from mobile, dispatch the simulator.html
@@ -195,7 +195,7 @@ export default {
 				 *
 				 * keep in sync with qr
 				 */
-				var target = "/#/simulate.html?qr=true&h=" + hash;
+				let target = "/#/simulate.html?qr=true&h=" + hash;
 				if(log == "false"){
 					target+="&log=false";
 				} else {
@@ -209,6 +209,8 @@ export default {
 				this.logger.log(-1,"postCreate","skipSplash");
 				this.skipSplash = true;
 			}
+
+			
 			/**
 			 * Load the model a little later to avoid any flickering
 			 */
@@ -234,11 +236,11 @@ export default {
 		async setPassword () {
 			this.logger.log(1,"setPassword","enter", this.password);
 
-			var hash = this.getHashFromUri();
-			let newHash = hash + this.password
+			const hash = this.getHashFromUri();
+			const newHash = hash + this.password
 
 			try {
-				let app = await Services.getModelService().findAppByHash(newHash)
+				const app = await Services.getModelService().findAppByHash(newHash)
 				if (app) {
 					this.passwordError = ''
 					this.loadModelFromHash(newHash)
@@ -342,7 +344,7 @@ export default {
 		},
 
 		getUserTasks (){
-			var tasks = [];
+			const tasks = [];
 			if (this.settings.tasks && this.settings.tasks){
 				for(var i=0; i< this.settings.tasks.length; i++){
 					var task = this.settings.tasks[i];
@@ -367,7 +369,7 @@ export default {
 				this.domNode.appendChild(div);
 
 				for(let id in model.screens){
-					let box = model.screens[id];
+					const box = model.screens[id];
 					if(box.style && box.style.backgroundImage){
 						let img = document.createElement("img");
 						img.style.backgroundImage = "url(/rest/images/" + this.hash + "/"  + box.style.backgroundImage.url +")";
@@ -376,7 +378,7 @@ export default {
 				}
 
 				for(let id in model.widgets){
-					let box = model.widgets[id];
+					const box = model.widgets[id];
 					if(box.style && box.style.backgroundImage){
 						let img = document.createElement("img");
 						img.style.backgroundImage = "url(/rest/images/" + this.hash + "/"  + box.style.backgroundImage.url +")";
@@ -432,14 +434,13 @@ export default {
 
 			const dialog = this.db
 				.div("MatchTestQRDialog MatcPadding")
-				.build(dialog);
+				.build();
 
 			const img = this.db.img().build(dialog)
 			css.add(img, "MatcSimulatorQR");
-			QR.getQRCode(this.hash, true, false).then(url => {
+			QR.getQRCode(this.hash, true, false, this.getLanguage()).then(url => {
 				img.src = url
 			})
-
 			this.db.div("MatcHint MatchTestQRDialogHint", this.getNLS("test.qr.headline"))
 				.build(dialog);
 

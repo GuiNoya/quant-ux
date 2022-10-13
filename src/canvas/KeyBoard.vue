@@ -24,14 +24,22 @@ export default {
 			  this.own(on(win.body(), "keyup", lang.hitch(this,"onKeyUp")));
       },
 
+      registerKeyBoardListener (listener) {
+        this._keyBoardKeyBoardListener = listener
+      },
+
+      cleanUpKeyBoardListener () {
+        delete this._keyBoardKeyBoardListener
+      },
+
       onKeyPress (e){
 
         this._currentKeyEvent = e;
-        var k = e.keyCode ? e.keyCode : e.which;
-        var target = e.target;
-        var isMeta = e.altKey || e.ctrlKey || e.metaKey;
-        var isCntrl = e.ctrlKey || e.metaKey;
-        var isShift = e.shiftKey
+        const k = e.keyCode ? e.keyCode : e.which;
+        const target = e.target;
+        const isMeta = e.altKey || e.ctrlKey || e.metaKey;
+        const isCntrl = e.ctrlKey || e.metaKey;
+        const isShift = e.shiftKey
 
         /**
          * Cancel listeners must be always fired.
@@ -41,6 +49,14 @@ export default {
           topic.publish("matc/canvas/esc");
           this.stopEvent(e);
           return
+        }
+
+        if (this._keyBoardKeyBoardListener) {
+          try {
+            this._keyBoardKeyBoardListener(e, false)
+          } catch (err) {
+             this.logger.log(1 ,"onKeyPress", "error in listener", err);
+          }
         }
 
         /**
@@ -181,6 +197,7 @@ export default {
          */
         } else if(k == 76){
           if(!this._inlineEditStarted  && !this._selectionToolStart){
+            this.startPrototypingView()
             this.addLineAtSelected(e)
           }
         /**
@@ -322,13 +339,20 @@ export default {
           return;
         }
 
-        var target = e.target;
+        const target = e.target;
         if(css.contains(target, "MatcIgnoreOnKeyPress")){
           return
         }
 
-        var k = e.keyCode ? e.keyCode : e.which;
+       if (this._keyBoardKeyBoardListener) {
+         try {
+            this._keyBoardKeyBoardListener(e, true)
+          } catch (err) {
+             this.logger.log(1 ,"onKeyUp", "error in listener", err);
+          }
+        }
 
+        const k = e.keyCode ? e.keyCode : e.which;
         if(this._inlineEditStarted ){
           /**
            * Do nothing...

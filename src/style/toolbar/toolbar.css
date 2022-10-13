@@ -195,6 +195,8 @@
  .MatcToobarPropertiesSection .MatcToolbarItem.MatcToolbarItemSmall{
 	min-width: 16.665%;
 	height:30px;
+	display: flex;
+	align-items: center;
  }
 
  .MatcToobarPropertiesSection .MatcToolbarItem.MatcToolbarAlignButton{
@@ -542,7 +544,28 @@
 	align-items: center;
 }
 
+/****************************************************
+ * Tooltip Section
+ ****************************************************/
 
+.MatcTooltipSettings  span.caret{
+	display: none;
+}
+.MatcToolbar .MatcTooltipSection .MatcTooltipSettings input,
+.MatcDesignTokenListPopup .MatcDesignTokenListPopupSection .MatcTooltipSettings input{
+	width:100%;
+	text-align: left;
+}
+
+.MatcTooltipSection .MatcToolbarGridFull {
+	padding: 8px 5px;
+}
+
+.MatcTooltipSettings .MatcToolbarItemLabel {
+    margin-left: 7px;
+    margin-right: 10px;
+    line-height: 1;
+}
 /****************************************************
  * Data Section
  ****************************************************/

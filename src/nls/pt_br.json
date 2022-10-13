@@ -12,6 +12,24 @@
         "loading": "Carregando...",
         "language-changed": "A língua foi alterada"
     },
+    "simulator": {
+        "welcome": {
+            "title": "Bem vindo",
+            "msg": "Você foi convidado para o teste de usabilidade da aplicação <b>{{name}}</b>. Você pode testar o protótipo clicando no botão <b>Iniciar Protótipo</b>.",
+            "privacy": "Este é um teste de usabilidade. Esteja ciente de que sua interação será registrada para melhorar o design. Nós não armazenamos nenhuma informação pessoal sobre você.",
+            "start": "Iniciar Protótipo",
+            "showTasks": "Mostrar Tarefas"
+        },
+        "tasks": {
+            "title": "Tarefas",
+            "msg": "Por favor, execute as seguintes tarefas."
+        },
+        "password": {
+            "title": "Senha",
+            "msg": "Para testar este protótipo você precisa de uma senha. Por favor, digite a senha e pressione <b>Próximo</b>",
+            "next": "Próximo"
+        }
+    },
     "toolbar": {
         "menu": {
             "start": "Iniciar Simulador",

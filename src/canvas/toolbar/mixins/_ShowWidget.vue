@@ -9,9 +9,9 @@ export default {
     name: '_Show',
     mixins:[_Tooltip, DojoWidget],
     data: function () {
-        return {
-					colorWidgets: []
-      }
+    	return {
+			colorWidgets: []
+      	}
 	},
     components: {},
 	computed: {
@@ -78,6 +78,12 @@ export default {
 			if (this.condStyleDiv){
 				css.remove(this.condStyleDiv, 'MatcToolbarSectionHidden')
 			}
+
+			css.remove(this.tooltipDiv, "MatcToolbarSectionHidden");
+			this.tooltipSettings.setWidget(model)
+			this.tooltipSettings.setBox(model)
+
+			this.showDesignTokenBtns(model, 'widget')
 		},
 
 		showWidgetDesignProperties (model) {

@@ -46,23 +46,24 @@ export default {
 			 * 11 = StandAlone
 		 	 */
       return {
-					state: 0,
-					isSinglePage: false,
-					defaultFontSize: 12,
-					canvasFlowWidth: 20000,
-					canvasFlowHeight: 10000,
-					canvasStartX: -1000,
-					canvasStartY: -1000,
-					canvasMargin: 0.6,
-					moveMode: "ps",
-					renderDND: true,
-					renderLines: false,
-					showDistance: true,
-					wireInheritedWidgets: false,
-					showAnimation: false,
-					showRuler: true,
-					hasSelectOnScreen: false,
-					gridBackground: {}
+			roundCoordinates: false,
+			state: 0,
+			isSinglePage: false,
+			defaultFontSize: 12,
+			canvasFlowWidth: 20000,
+			canvasFlowHeight: 10000,
+			canvasStartX: -1000,
+			canvasStartY: -1000,
+			canvasMargin: 0.6,
+			moveMode: "ps",
+			renderDND: true,
+			renderLines: false,
+			showDistance: true,
+			wireInheritedWidgets: false,
+			showAnimation: false,
+			showRuler: true,
+			hasSelectOnScreen: false,
+			gridBackground: {}
         }
     },
     components: {},
@@ -312,14 +313,14 @@ export default {
 		renderPartial (sourceModel, changes) {
 			this.logger.log(1,"renderPartial", "enter", changes);
 			this.sourceModel = sourceModel;
-			this.model = ModelUtil.createScalledModel(this.sourceModel, this.zoom)
+			this.model = ModelUtil.createScalledModel(this.sourceModel, this.zoom, this.roundCoordinates)
 		},
 
 		renderZoom () {
 			this.setContainerPos()
 			if (this.model) {
 				this.cleanUpScreenButtons()
-				this.model = ModelUtil.createScalledModel(this.sourceModel, this.zoom)
+				this.model = ModelUtil.createScalledModel(this.sourceModel, this.zoom, this.roundCoordinates)
 				this.updateDnD(this.model)
 				/**
 				 * 4.0.40: We do not call renderSelection(),as this would also update the 
@@ -338,7 +339,7 @@ export default {
 		onWidgetPositionChange (sourceModel) {
 			this.logger.log(1,"onWidgetPositionChange", "enter", sourceModel);
 			this.sourceModel = sourceModel;
-			this.model = ModelUtil.createScalledModel(sourceModel, this.zoom)
+			this.model = ModelUtil.createScalledModel(sourceModel, this.zoom, this.roundCoordinates)
 			this.renderFactory.setZoomedModel(sourceModel);
 			this.renderFactory.updatePositions(sourceModel)
 			this.renderLayerList(sourceModel);
@@ -351,11 +352,15 @@ export default {
 
 			try {
 				/**
-				 * The sourceModel is used to draw tge elements on the zoomable
+				 * The sourceModel is used to draw the elements on the zoomable
 				 * background, whereas the model is used to handle DND
 				 */
 				this.sourceModel = ModelUtil.updateTemplateModifies(sourceModel);
-				this.model = ModelUtil.createScalledModel(sourceModel, this.zoom)
+
+				/**
+				 * Use to render drag and drop nodes
+				 */
+				this.model = ModelUtil.createScalledModel(sourceModel, this.zoom, this.roundCoordinates)
 
 				this.renderFlowViewFast(this.sourceModel, this.model, isResize);
 
@@ -558,21 +563,21 @@ export default {
 				let z = '1'
 				if (this.model.grid.type === "columns"){
 
-					let h = this.model.grid.h * 1
-					let w = this.model.grid.w * 1
+					const h = this.model.grid.h * 1
+					const w = this.model.grid.w * 1
 				
 					if (!this.gridBackground[z]){
-						let columnCount = this.model.grid.columnCount * 1;
-						let columnOffset = this.model.grid.columnOffset * 1;
-						let columnGutter = this.model.grid.columnGutter * 1;
-						let columnWidth = this.model.grid.columnWidth * 1;
+						const columnCount = this.model.grid.columnCount * 1;
+						const columnOffset = this.model.grid.columnOffset * 1;
+						const columnGutter = this.model.grid.columnGutter * 1;
+						const columnWidth = this.model.grid.columnWidth * 1;
 					
-						let c = document.createElement("canvas");
+						const c = document.createElement("canvas");
 						c.width = this.sourceModel.screenSize.w;
 						c.height = 1;
-						let context = c.getContext("2d");
+						const context = c.getContext("2d");
 
-						var lastX = columnOffset;
+						let lastX = columnOffset;
 						for (let i=0; i< columnCount; i++){
 							let x = lastX + columnWidth;
 						
@@ -607,14 +612,14 @@ export default {
 					 * We render with double resolution and let the broser sort it out. Wr could call
 					 * this on zoom and adopt z to the zoom
 					 */
-					let z = 2
-					let h = this.model.grid.h * z;
-					let w = this.model.grid.w * z;
+					const z = 2
+					const h = this.model.grid.h * z;
+					const w = this.model.grid.w * z;
 
 					if (w > 0 && h > 0 && w < this.sourceModel.screenSize.w && h < this.sourceModel.screenSize.h ){
 
 						if (!this.gridBackground[z]){
-							let c= document.createElement("canvas");
+							let c = document.createElement("canvas");
 							c.width=w;
 							c.height=h;
 							let context = c.getContext("2d");
@@ -644,14 +649,15 @@ export default {
 
 		createScreenDnD (screen){
 			this.logger.log(4,"createScreenDnD", "enter");
-			var div = this.createBox(screen);
+			const div = this.createBox(screen);
 			div._screenID = screen.id
+			div._screenDND = true		
 			css.add(div, "MatcScreenDnD");
 			return div;
 		},
 
 		createScreenLabel(screen) {
-			let lbl =document.createElement("div");
+			const lbl =document.createElement("div");
 			css.add(lbl, "MatcScreenLabel");
 			lbl._screenLabel = true
 			lbl._screenID = screen.id
@@ -661,7 +667,7 @@ export default {
 
 		createScreen (screen){
 			this.logger.log(4,"createScreen", "enter");
-			var div = this.createBox(screen);
+			const div = this.createBox(screen);
 			css.add(div, "MatcScreen");
 			return div;
 		},
@@ -669,7 +675,7 @@ export default {
 
 		createWidgetDnD (widget){
 			this.logger.log(4,"createWidgetDnD", "enter");
-			var div = this.createBox(widget);
+			const div = this.createBox(widget);
 			div._widgetID = widget.id
 			css.add(div, "MatcWidgetDND");
 			if (this.hasLogic(widget)){
@@ -688,38 +694,31 @@ export default {
 
 		createZoomedWidget (widget) {
 			this.logger.log(-1,"createZoomedWidget", "enter");
-
-			var div = this.createBox(widget);
+			const div = this.createBox(widget);
 			css.add(div, "MatcWidget");
-
 			this.renderFactory.setScaleFactor(this.zoom, this.zoom)
 			this.renderFactory.createWidgetHTML(div, widget);
 			this.renderFactory.setScaleFactor(1, 1)
-
 			if(this.hasLine(widget)){
 				css.add(div, "MatcWidgetWithTransition");
 			}
-
 			return div;
 		},
 
 		createWidget (widget){
 			this.logger.log(4,"createWidget", "enter");
-			var div = this.createBox(widget);
+			const div = this.createBox(widget);
 			css.add(div, "MatcWidget");
-
 			this.renderFactory.createWidgetHTML(div, widget);
-
 			if(this.hasLine(widget)){
 				css.add(div, "MatcWidgetWithTransition");
 			}
-
 			return div;
 		},
 
 		createBox (box){
 			this.logger.log(6,"createBox", "enter");
-			var div = document.createElement("div");
+			const div = document.createElement("div");
 			this.domUtil.setBox(div, box)
 			css.add(div, "MatcBox");
 			return div;
@@ -783,7 +782,7 @@ export default {
 		},
 
 		setWidgetStyle (id, style, widget){
-			this.logger.log(-1,"setWidgetStyle", "enter > ", id);
+			this.logger.log(1,"setWidgetStyle", "enter > ", id);
 			/**
 			 * get the source model and copy the style. Asume
 			 * partieal updates...
@@ -924,14 +923,14 @@ export default {
 			***************************************************************************/
 
 		getCanvasMousePosition (e){
-			var pos = this._getMousePosition(e);
+			const pos = this._getMousePosition(e);
 			pos.x -= (this.domPos.x + this.canvasPos.x);
 			pos.y-= (this.domPos.y + this.canvasPos.y);
 			return pos;
 		},
 
 		getRelCanvasMousePosition (e){
-			var pos = this.getCanvasMousePosition(e);
+			const pos = this.getCanvasMousePosition(e);
 			pos.x = pos.x / this.getZoomed(this.canvasPos.w, this.zoom);
 			pos.y = pos.y / this.getZoomed(this.canvasPos.h, this.zoom);
 			return pos;
@@ -939,7 +938,7 @@ export default {
 
 
 		getAbsCanvasMousePosition (e){
-			var pos = this._getMousePosition(e);
+			const pos = this._getMousePosition(e);
 			return pos;
 		},
 
@@ -1001,14 +1000,11 @@ export default {
 
 		cleanUpAlignment (){
 			this.logger.log(4,"cleanUpAlignment","enter");
-
 			if(this._alignmentTool){
 				this._alignmentTool.cleanUp();
 				delete this._alignmentTool;
 			}
-
 			this._alignmentToolInited = false;
-
 		},
 
 		getModelPosition (){
@@ -1020,11 +1016,11 @@ export default {
 		 * Cancel stuff
 		 ***************************************************************************/
 		/**
-			* Register a call back that will be called in case
-			* an cancel action is executed. The name of the
-			* method has to be passed. The methods can return true,
-			* to request an rerendering.
-			*/
+		 * Register a call back that will be called in case
+		 * an cancel action is executed. The name of the
+		 * method has to be passed. The methods can return true,
+		 * to request an rerendering.
+		 */
 		setCanvasCancelCallback (l){
 			this._cancelCallback = l;
 		},
@@ -1034,33 +1030,25 @@ export default {
 		},
 
 		onCancelAction (){
-
 			this.logger.log(0,"onCancelAction", "enter > " + this._cancelCallback);
-
-			if(this._cancelCallback && this[this._cancelCallback]){
-
-				var rerender = this[this._cancelCallback]();
+			if (this._cancelCallback && this[this._cancelCallback]){
+				const rerender = this[this._cancelCallback]();
 				if(rerender){
 					this.rerender();
 				}
 			} else {
 				this.rerender();
 			}
-
 			this._cancelCallback = null;
 		},
 
-
-
 		/***************************************************************************
-			* Helper
-			***************************************************************************/
-		getColor: function(value){
-
+		* Helper
+		***************************************************************************/
+		getColor (value){
 			if(value == 0){
 				return this.defaultLineColor;
 			}
-
 			return this.mixColor(value);
 		},
 

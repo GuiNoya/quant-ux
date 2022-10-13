@@ -144,7 +144,11 @@
 								<CollabUser :users="collabUsers" @select="onCollabUserClicked" />
 							</div>
 							<div class="MatcToolbarSection">
-								<EditModeButton :value="canvasViewConfig" @change="onChangeCanvasViewConfig"  @canvasViewMode="setCanvasViewMode"/>
+								<EditModeButton 
+									:value="canvasViewConfig" 
+									@change="onChangeCanvasViewConfig" 
+									@canvasViewMode="setCanvasViewMode" 
+									ref="editModeButton"/>
 							</div>
 							<ViewConfig :value="canvasViewConfig" @change="onChangeCanvasViewConfig" v-if="hasViewConfigVtn"/>
 							<HelpButton :hasNotifications="true" :hasToolbar="true"/>
@@ -256,17 +260,17 @@ export default {
 		getMainMenu   () {
 
 			var options = [
- 			  {label : this.$i18n.t('toolbar.menu.start'), callback:lang.hitch(this, "startSimilator") },
-			  {label : this.$i18n.t('toolbar.menu.settings'), callback:lang.hitch(this, "onShowSettings")},
-			  {label : this.$i18n.t('toolbar.menu.shortcuts'), callback:lang.hitch(this, "showShortCuts")},
-			  {label : this.$i18n.t('toolbar.menu.share'), callback:lang.hitch(this, "showSharing")},
-			  {label : this.$i18n.t('toolbar.menu.import'), callback:lang.hitch(this, "showImportDialog")},
-			  {label : this.$i18n.t('toolbar.menu.export'), callback:lang.hitch(this, "showDownloadDialog")},
+ 			  {label : this.getNLS('toolbar.menu.start'), callback:lang.hitch(this, "startSimilator") },
+			  {label : this.getNLS('toolbar.menu.settings'), callback:lang.hitch(this, "onShowSettings")},
+			  {label : this.getNLS('toolbar.menu.shortcuts'), callback:lang.hitch(this, "showShortCuts")},
+			  {label : this.getNLS('toolbar.menu.share'), callback:lang.hitch(this, "showSharing")},
+			  {label : this.getNLS('toolbar.menu.import'), callback:lang.hitch(this, "showImportDialog")},
+			  {label : this.getNLS('toolbar.menu.export'), callback:lang.hitch(this, "showDownloadDialog")},
 			  {css:"MatcToolbarPopUpLine"},
-			  {label : this.$i18n.t('toolbar.menu.change-screen-size'), callback:lang.hitch(this, "onChangeScreenSize")},
-			  {label :this.$i18n.t('toolbar.menu.save-as'), callback:lang.hitch(this, "onSaveAs")},
+			  {label : this.getNLS('toolbar.menu.change-screen-size'), callback:lang.hitch(this, "onChangeScreenSize")},
+			  {label :this.getNLS('toolbar.menu.save-as'), callback:lang.hitch(this, "onSaveAs")},
 			  {css:"MatcToolbarPopUpLine"},
-			  {label : this.$i18n.t('toolbar.menu.exit'), callback:lang.hitch(this, "onExit")},
+			  {label : this.getNLS('toolbar.menu.exit'), callback:lang.hitch(this, "onExit")},
 			]
 			return options
 		},
@@ -350,6 +354,13 @@ export default {
 		onChangeCanvasViewConfig (key, value) {
 			if (this.canvas) {
 				this.canvas.setCanvasViewConfig(key, value)
+			}
+		},
+
+		startPrototypingView () {
+			this.logger.log(-1,"startPrototypingView", "entry > ");
+			if (this.$refs.editModeButton) {
+				this.$refs.editModeButton.setPrototype()
 			}
 		},
 
@@ -695,6 +706,10 @@ export default {
 
 			if(this.widgetSize.isDirty()){
 				this.widgetSize.update();
+			}
+
+			if (this.tooltipSettings) {
+				this.tooltipSettings.blur()
 			}
 		},
 
@@ -1182,7 +1197,7 @@ export default {
 			this.stopEvent(e);
 			this.logger.log(1,"onToolCreateTemplate", "entry : " + this._selectedWidget);
 
-			var name = this.$i18n.t("toolbar.templates.new");
+			let name = this.getNLS("toolbar.templates.new");
 			if(this._selectedWidget && this._selectedWidget.name){
 				name = this._selectedWidget.name;
 			}
@@ -1731,14 +1746,10 @@ export default {
 
 		setTempWidgetStyle (key, value){
 			this.logger.log(2,"setTempWidgetStyle", "entry > " + key + " - "+ value);
-			var modelKey = this._getViewStyleModelKey();
-			if ("style" == modelKey) {
-				var newStyle = {};
+			const modelKey = this._getViewStyleModelKey();
+			if ("style" === modelKey) {
+				const newStyle = {};
 				newStyle[key] = value;
-				/**
-				 * FIXME: What does this do?
-				 */
-				modelKey = this._getViewStyleModelKey();
 				if(this._selectedWidget && this._selectedWidget.style){
 					this.canvas.setTempWidgetStyle(this._selectedWidget.id, newStyle);
 				} else if(this._selectedMulti){
@@ -1752,12 +1763,14 @@ export default {
 
 		setTempMultiWidgetStyle (newStyle){
 			this.logger.log(0,"setTempMultiWidgetStyle", "entry > " + newStyle);
-
-			if(this._selectedWidget && this._selectedWidget.style){
-				this.canvas.setTempWidgetStyle(this._selectedWidget.id, newStyle);
-			} else if(this._selectedMulti){
-				for (var i=0; i < this._selectedMulti.length; i++){
-					this.canvas.setTempWidgetStyle(this._selectedMulti[i], newStyle);
+			const modelKey = this._getViewStyleModelKey();
+			if ("style" === modelKey) {
+				if(this._selectedWidget && this._selectedWidget.style){
+					this.canvas.setTempWidgetStyle(this._selectedWidget.id, newStyle);
+				} else if(this._selectedMulti){
+					for (var i=0; i < this._selectedMulti.length; i++){
+						this.canvas.setTempWidgetStyle(this._selectedMulti[i], newStyle);
+					}
 				}
 			}
 			return false;

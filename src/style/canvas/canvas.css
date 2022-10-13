@@ -184,6 +184,7 @@
 
 .MatcInlineEditableStarted{
 	z-index:90010;
+	outline: none;
 }
 
 
@@ -1114,6 +1115,34 @@
 	border-radius:3px;
 	padding: 0px;
 	text-align: center;
+}
+
+.MatcSimulatorQRWrapper{
+	display: inline-block;
+	vertical-align: top;
+	position: relative;
+}
+
+.MatcSimulatorQRWrapperSmall {
+	display: none;
+}
+
+.MatcSimulatorQRWrapperClose {
+    position: absolute;
+    top: -16px;
+    right: -16px;
+    font-size: 32px;
+    background: #fff;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    padding: 4px;
+    line-height: 1;
+	cursor: pointer;
+}
+
+.MatcSimulatorQRWrapperClose:hover {
+	color: #000;
 }
 
  .MatcSimulatorQR{

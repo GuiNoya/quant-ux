@@ -94,7 +94,7 @@ export default {
     },
 
     tempOwn (listener) {
-      if (!listener.remove) {
+      if (!listener || !listener.remove) {
           console.error('tempOwn() > wrong object passed!', new Error().stack)
       }
       if(!this._dojoTempListener){
@@ -421,7 +421,7 @@ export default {
     _getMousePosition: function(e){
       // updated and synced with simulator
       // in case of error roll back and change mixin order in simulator
-      var result = {x: 0, y: 0};
+      let result = {x: 0, y: 0};
       if (e) {
 		    if (e.touches && e.touches.length > 0) {
           e = e.touches[0]

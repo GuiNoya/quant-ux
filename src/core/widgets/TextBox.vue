@@ -30,6 +30,7 @@ export default {
         this.input.type = "text";
       } else {
         this.input = document.createElement("div");
+        css.add(this.input, "MatcWidgetTypeTextBoxPreview");
       }
       css.add(this.input, "MatcWidgetTypeTextBoxInput");
       this.domNode.appendChild(this.input);
@@ -54,9 +55,7 @@ export default {
 
     wireEvents () {
       if (!this.wired) {
-        this.own(
-          this.addClickListener(this.domNode, lang.hitch(this, "onInputClick"))
-        );
+        this.own(this.addClickListener(this.domNode, lang.hitch(this, "onInputClick")));
         this.own(on(this.input, "focus", lang.hitch(this, "onFocus")));
         if (this.mode == "simulator") {
           this.own(on(this.input, "blur", lang.hitch(this, "onBlur")));
@@ -67,6 +66,7 @@ export default {
       this.afterWiredEvents();
       this.wired = true;
       this.setAutoFocus(this.input);
+      this.wireHover()
     },
 
     /**
@@ -88,7 +88,8 @@ export default {
       this.log.log(0, "onFocus", "enter >" + this.lastValidation);
       this.stopPropagation(e);
 
-      this.keyListener = on(this.input,"keyup", lang.hitch(this, "onKeyPress"));
+      this.keyUpListener = on(this.input,"keyup", lang.hitch(this, "onKeyUp"));
+      this.keyDownListener = on(this.input,"keydown", lang.hitch(this, "onKeyDown"));
       if (this.model.focus && this.lastValidation) {
         this.emitAnimation(this.model.id, 0, this.model.focus);
       }
@@ -101,21 +102,27 @@ export default {
       this.initCompositeState(this._readValue());
     },
 
-    onKeyPress (e) {
-      this.log.log(3, "onKeyPress", "enter > ");
+    onKeyUp () {
+      this.log.log(3, "onKeyUp", "enter > ");
       this.addCompositeSubState(this._readValue());
       this.value = this._readValue();
+      this.emit("keyUp", this._readValue());
+    },
 
-      /**
-       * Make sure the keyboard is closed in
-       *
-       */
-      var key = e.which || e.keyCode;
+    onKeyDown(e) {
+      this.log.log(3, "onKeyDown", "enter > ");
+      const key = e.which || e.keyCode;
       if (13 == key) {
         this.onEnterPressed();
-      } else {
-        this.emit("keyUp", this._readValue());
       }
+    },
+
+    onEnterPressed () {
+      this.input.blur();
+      var gesture = {
+        type: "KeyboardEnter"
+      };
+      this.emit("gesture", gesture);
     },
 
     onChange () {
@@ -128,13 +135,7 @@ export default {
       this.emit("gesture", gesture);
     }, 
 
-    onEnterPressed () {
-      this.input.blur();
-      var gesture = {
-        type: "KeyboardEnter"
-      };
-      this.emit("gesture", gesture);
-    },
+   
 
     onBlur (e) {
       this.log.log(1, "onBlur", "enter");
@@ -221,13 +222,18 @@ export default {
     afterSetState () {},
 
     cleanUp () {
-      if (this.keyListener) {
-        this.keyListener.remove();
+      if (this.keyUpListener) {
+        this.keyUpListener.remove();
       }
-      delete this.keyListener;
+      delete this.keyUpListener;
+      if (this.keyDownListener) {
+        this.keyDownListener.remove();
+      }
+      delete this.keyDownListener;
     },
 
     render (model, style, scaleX, scaleY) {
+
       this.model = model;
       this.style = style;
       this._validStyle = lang.clone(style);
@@ -257,8 +263,8 @@ export default {
       }
 
       if (model.props.validation && this.mode == "simulator") {
-        var validation = model.props.validation;
-        var type = validation.type;
+        const validation = model.props.validation;
+        let type = validation.type;
         if (type == "custom") {
           type = validation.subtype;
         }
@@ -290,9 +296,9 @@ export default {
          * stuff
          *
          */
-        var selector = model.id + "" + new Date().getTime();
+        const selector = model.id + "" + new Date().getTime();
 
-        var placeholderStyle = {
+        const placeholderStyle = {
           color: this.getPlaceHolderColor(style)
         };
 
@@ -318,7 +324,7 @@ export default {
     beforeSetStyle () {},
 
     getPlaceHolderColor (style) {
-      var c = new Color(style.color);
+      const c = new Color(style.color);
       c.a = 0.5;
       return c.toString();
     },
@@ -327,11 +333,11 @@ export default {
       if (!this._styleNode) {
         this._styleNode = [];
       }
-      var style = document.createElement("style");
+      const style = document.createElement("style");
       style.type = "text/css";
       style.setAttribute("matc", "true");
-      var s = "." + selector + "{";
-      for (var key in styles) {
+      let s = "." + selector + "{";
+      for (let key in styles) {
         s += key + " :" + styles[key] + ";";
       }
       s += "}";
@@ -344,15 +350,29 @@ export default {
       return this.value;
     },
 
+    unsetPlaceHolder () {
+      css.remove(this.input, "MatcWidgetTypeTextBoxInputPlaceholder");
+      this.input.style.color = this.style.color;
+    },
+
+    setPlaceholder (msg) {
+      if (this.mode == "simulator") {
+        this.input.placeholder = msg;
+      } else {
+        css.add(this.input, "MatcWidgetTypeTextBoxInputPlaceholder");
+        this.input.innerHTML = msg;
+        this.input.style.color = this.getPlaceHolderColor(this.style);
+      }
+    },
+
     setValue (value, ignoreValidation) {
+      this.unsetPlaceHolder()
       if (value != null && value != undefined && this.value != value) {
         this.value = value;
-        css.remove(this.input, "MatcWidgetTypeTextBoxInputPlaceholder");
         if (this.mode == "simulator") {
           this.input.value = value;
         } else {
           this.input.innerHTML = value;
-
           if (this.model.props.placeholder) {
             if (this.model.props.label != value) {
               this.input.style.color = this.style.color;
@@ -369,9 +389,9 @@ export default {
     },
 
     _validateValue (value) {
-      var validation = this.model.props.validation;
+      const validation = this.model.props.validation;
       if (validation) {
-        var type = validation.type;
+        let type = validation.type;
         if (type == "custom") {
           type = validation.subtype;
         }
@@ -464,7 +484,7 @@ export default {
             }
 
             if (operator == "length") {
-              var validString = true;
+              let validString = true;
               if (validation.min != null && validation.min != undefined) {
                 validString = validString && value.length >= validation.min;
               }
@@ -491,17 +511,9 @@ export default {
       this.setValue(v);
     },
 
-    setPlaceholder: function(msg) {
-      if (this.mode == "simulator") {
-        this.input.placeholder = msg;
-      } else {
-        css.add(this.input, "MatcWidgetTypeTextBoxInputPlaceholder");
-        this.input.innerHTML = msg;
-        this.input.style.color = this.getPlaceHolderColor(this.style);
-      }
-    },
+  
 
-    beforeDestroy: function() {
+    beforeDestroy () {
       if (this._compositeState) {
         this.emitCompositeState("text", this.input.value);
       }

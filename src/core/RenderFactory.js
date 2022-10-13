@@ -49,6 +49,7 @@ import ProgressBar from 'core/widgets/ProgressBar'
 import ScreenSegment from 'core/widgets/ScreenSegment'
 import LockSlider from 'core/widgets/LockSlider'
 import Script from 'core/widgets/Script'
+import IconToggleButton from 'core/widgets/IconToggleButton'
 
 import CountingStepper from 'core/widgets/CountingStepper'
 import Tree from 'core/widgets/Tree'
@@ -335,7 +336,7 @@ export default class RenderFactory extends Core {
 	}
 
 	updateLabel (widget) {
-		var uiWidget = this.getUIWidgetByID(widget.id);
+		const uiWidget = this.getUIWidgetByID(widget.id);
 		if (!uiWidget) {
 			let node = this._labelNodes[widget.id]
 			if (node) {
@@ -345,10 +346,16 @@ export default class RenderFactory extends Core {
 	}
 
 	updateWidget(widget) {
-		console.debug('updateWidget', widget)
 		let parent = this._widgetNodes[widget.id];
 		if (parent) {
 			this.setStyle(parent, widget, true, false);
+		}
+		const uiWidget = this.getUIWidgetByID(widget.id);
+		if (!uiWidget) {
+			const labelNode = this._labelNodes[widget.id]
+			if (labelNode) {
+				this.setInnerHTML(labelNode, widget.props.label)
+			}
 		}
 	}
 
@@ -405,6 +412,7 @@ export default class RenderFactory extends Core {
 			var w = this._uiWidgets[model.id];
 			if (this.mode == "simulator") {
 				w.wireEvents();
+				w.onSimulatoStarted()
 			}
 			/**
 			 * In case of player or simulator set previews status
@@ -636,6 +644,12 @@ export default class RenderFactory extends Core {
 		this._uiWidgets[model.id] = widget;
 	}
 
+	_createIconToggleButton(parent, model) {
+		var widget = this.$new( IconToggleButton);
+		widget.placeAt(parent);
+		this._uiWidgets[model.id] = widget;
+	}
+
 	_createTable(parent, model) {
 		var widget = this.$new(TableWidget);
 		widget.placeAt(parent);
@@ -845,7 +859,7 @@ export default class RenderFactory extends Core {
 
 
 	_createLabel(parent, model) {
-		var widget = this.$new(Label);
+		var widget = this.$new(Label, {mode: this.mode});
 		widget.placeAt(parent);
 		this._uiWidgets[model.id] = widget;
 	}

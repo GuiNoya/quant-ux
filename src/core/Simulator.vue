@@ -9,16 +9,15 @@
      		<transition name="fade">
 						<div class="MatcSimulatorContent" v-if="step === 6">
 							<div class="MatcSimulatorContentCntr">
-								<h2>Password</h2>
-								<p>
-									To test this prototype you need a password. Please enter
-									the password and press 	&quot;Next	&quot;
+								<h2>{{getNLS("simulator.password.title")}} </h2>
+								<p v-html="getNLS('simulator.password.msg')">
+									
 								</p>
 								<input v-model="password" class="form-control MatcMarginTop" @keypress.enter="setPassword"/>
 
 								<div class="MatcMarginTop">
 									<div  class="MatcButton MatcSimulatorStartBtn" @click="setPassword()">
-										Next
+										{{getNLS("simulator.password.next")}}
 									</div>
 									<span class="MatcError" style="margin-left:20px">
 										{{passwordError}}
@@ -29,58 +28,53 @@
 						</div>
 						<div class="MatcSimulatorContent" v-if="step === 2">
 							<div class="MatcSimulatorContentCntr">
-								<h2>Welcome!</h2>
-								<p v-if="settings.description">
-									{{settings.description}}
-								</p>
-								<p v-else>
-									You were invited for a usability test of the "{{model.name}}" application.
-									You can try out the prototype by clicking on the <b>Start Prototype</b> button.
-								</p>
-								<p>
-									This is a usability test and your interaction will be stored to make the design better.
-											We <u>do not store</u> any personal information about you.
-								</p>
-							</div>
-							<div class="MatcMarginTop">
-								<div  class="MatcButton MatcSimulatorStartBtn" @click="onStart()" v-if="getUserTasks().length === 0">
-									Start Prototype
+								<h2> {{getNLS("simulator.welcome.title")}} !</h2>
+									<p v-if="settings.description" >
+										{{settings.description}}
+									</p>
+									<p v-else v-html="getNlSWithReplacement('simulator.welcome.msg', {'name': model.name})"></p>
+									<p v-html="getNLS('simulator.welcome.privacy')"></p>
 								</div>
-								<div class="MatcButton MatcSimulatorStartBtn" @click="step = 3" v-else>
-									Show Tasks
+								<div class="MatcMarginTop">
+									<div  class="MatcButton MatcSimulatorStartBtn" @click="onStart()" v-if="getUserTasks().length === 0">
+										{{getNLS("simulator.welcome.start")}}
+									</div>
+									<div class="MatcButton MatcSimulatorStartBtn" @click="step = 3" v-else>
+										{{getNLS("simulator.welcome.showTasks")}}
+									</div>
 								</div>
-							</div>
 						</div>
 						<div class="MatcSimulatorContent" v-if="step === 3">
 							<div class="MatcSimulatorContentCntr">
-							<h2>Tasks!</h2>
-							<p>
-								Please perform the following steps!
-							</p>
-							<div v-for="t in getUserTasks()" :key="t.id">
-								<h3>{{t.name}}</h3>
-								<div class="MatcTestTaskDescription">
-									{{t.description}}
+								<h2>{{getNLS("simulator.tasks.title")}} !</h2>
+								<p>
+									{{getNLS("simulator.tasks.msg")}}
+								</p>
+								<div v-for="t in getUserTasks()" :key="t.id">
+									<h3>{{t.name}}</h3>
+									<div class="MatcTestTaskDescription">
+										{{t.description}}
+									</div>
 								</div>
-							</div>
 							</div>
 
 							<div class="MatcMarginTop">
 							<div class="MatcButton MatcSimulatorStartBtn" @click="onStart()">
-								Start Prototype
+								{{getNLS("simulator.welcome.start")}}
 							</div>
 						</div>
 					</div>
      		</transition>
 
-        <div class="MatcSimulatorStartBtn" data-dojo-attach-point="startNode" v-show="step === 4">Test Prototype</div>
+        <div class="MatcSimulatorStartBtn" data-dojo-attach-point="startNode" v-show="step === 4">
+			{{getNLS("simulator.welcome.start")}}
+		</div>
 
       </div>
-      <div class="MatcSimulatorPrivacy" data-dojo-attach-point="privacyNode" v-show="step === 4">
-        This is a usability test and your interaction will be stored to make the design better.
-        We <u>do not store</u> any personal information about you.
+      <div class="MatcSimulatorPrivacy" data-dojo-attach-point="privacyNode" v-show="step === 4" v-html="getNLS('simulator.welcome.privacy')">
+       
       </div>
-      <div class="MatcSimulatorVersion">v4.0.93</div>
+      <div class="MatcSimulatorVersion">v4.1.15</div>
     </div>
   </div>
 </template>
@@ -110,6 +104,8 @@ import DataBindingMixin from 'core/simulator/DataBindingMixin'
 import EventMixin from 'core/simulator/EventMixin'
 import TemplateMixin from 'core/simulator/TemplateMixin'
 import ScriptMixin from 'core/simulator/ScriptMixin'
+import TooltipMixin from 'core/simulator/TooltipMixin'
+
 import ModelUtil from 'core/ModelUtil'
 
 import Gestures from 'core/Gestures'
@@ -118,7 +114,7 @@ export default {
 	name: 'Simulator',
 	props: ['mode', 'app'],
 	mixins:[
-		Layout, Gestures, RestMixin, LogMixin, RenderMixin, EventMixin,ScriptMixin,
+		Layout, Gestures, RestMixin, LogMixin, RenderMixin, EventMixin,ScriptMixin, TooltipMixin,
 		ScrollMixin, AnimationMixin, MouseMixin, DataBindingMixin, TemplateMixin, DojoWidget
 	],
     data: function () {
@@ -165,9 +161,12 @@ export default {
 			this._animations = {};
 			this.animationFactory = new Css3Animation();
 
-			var uri = location.hash;
-			var query = uri.substring(uri.indexOf("?") + 1, uri.length);
-			var params = io.queryToObject(query);
+			const uri = location.hash;
+			const query = uri.substring(uri.indexOf("?") + 1, uri.length);
+			const params = io.queryToObject(query);
+
+			this.initNLS()
+		
 
 			/** Since 2.4 we allow to pass a user */
 			if (params.u && params.u.length > 0) {
@@ -183,8 +182,6 @@ export default {
 			if(this.mode == "standalone"){
 				// FIXME: On reloads this may cause issues because we get several screens
 				this.baseURI = uri
-
-			
 
 				if(params.live == "true"){
 					this.live = true;
@@ -217,8 +214,9 @@ export default {
 						this.setInvitation(params.h);
 						Services.getModelService().findAppByHash(params.h).then(app => this.loadSettings(app))
 					}
-
 				}
+
+			
 
 			} else {
 				if(this.hash) {
@@ -287,14 +285,14 @@ export default {
 		},
 
 		async checkLiveUpdate (){
-			let app = await Services.getModelService().checkAppUpdateByHash(this.hash)
+			const app = await Services.getModelService().checkAppUpdateByHash(this.hash)
 			this.setLiveUpdate(app)
 			// this._doGet("rest/invitation/"+ this.hash + "/update.json", lang.hitch(this, "setLiveUpdate"));
 		},
 
 		async setLiveUpdate (app){
 			if (app && app.lastUpdate && this.model && this.model.lastUpdate < app.lastUpdate){
-				let app = await Services.getModelService().findAppByHash(this.hash)
+				const app = await Services.getModelService().findAppByHash(this.hash)
 				this.doLiveUpdate(app)
 				// this._doGet("rest/invitation/"+ this.hash + "/app.json", lang.hitch(this, "doLiveUpdate"));
 			} else {
@@ -332,7 +330,7 @@ export default {
 
 		async loadSettings (model) {
 			if (this.hash && this.qr) {
-				let settings = await Services.getModelService().findTestByHash(model, this.hash)
+				const settings = await Services.getModelService().findTestByHash(model, this.hash)
 				this.settings = settings;
 				this.logger.log(-1,"loadSettings","enter >", this.settings);
 			}
@@ -423,12 +421,12 @@ export default {
 
 
 		onPopState (){
-			var hash = location.hash;
+			const hash = location.hash;
 			if(hash && hash.length > 1){
-				var uri = location.hash;
-				var query = uri.substring(uri.indexOf("?") + 1, uri.length);
-				var params = io.queryToObject(query);
-				var screenId = params.s
+				const uri = location.hash;
+				const query = uri.substring(uri.indexOf("?") + 1, uri.length);
+				const params = io.queryToObject(query);
+				const screenId = params.s
 				if(this.currentScreen &&  this.currentScreen.id != screenId){
 					this.logger.log(0,"onPopState","back detected! >> " + screenId);
 					this.setScreenId(screenId);
@@ -470,7 +468,8 @@ export default {
 			this.initScale();
 			this.initLiveUpdate();
 			this.initScroll();
-			await this.initLoadScripts()
+			// this can cause issues when the script want to fix
+			await this.initLoadScripts() 
 			await this.initDefaultDataBinding(model)
 	
 
@@ -569,8 +568,7 @@ export default {
 
 		setScreenId (screenID){
 			this.logger.log(3,"setScreen","enter >" + screenID);
-
-			var screen = this.model.screens[screenID];
+			const screen = this.model.screens[screenID];
 			if(screen){
 				this.renderScreen(screen, null);
 			} else {
@@ -595,14 +593,14 @@ export default {
 		 **********************************************************/
 
 		getMatchingLine (screenID, widgetID, line, value) {
-			var logic = this.model.widgets[line.to];
+			const logic = this.model.widgets[line.to];
 			if (logic) {
 				/**
 				 * FIXME: Here is a bug, if the first line dos not have a rule, but the second has...
 				 */
 				var matchedLine = null;
-				var lines = this.getFromLines(logic);
-				for(var i=0; i< lines.length; i++){
+				const lines = this.getFromLines(logic);
+				for(let i=0; i< lines.length; i++){
 					line = lines[i];
 					if(line.rule){
 						if(this.isValueMatchingRule(value, true, line.rule)){
@@ -635,21 +633,21 @@ export default {
 			this.logger.log(0,"onTransitionBack","enter >  sreen:" + screenID + " > widget:" + widgetID);
 			this.stopEvent(e);
 			this.log("WidgetClick",screenID, widgetID, e);
-			var lastScreenLine = this.screenHistory.pop();
+			const lastScreenLine = this.screenHistory.pop();
 			if(lastScreenLine){
 
 				if(this.currentOverlay){
 					this.popOverlay();
 				} else {
 
-					var lastScreenID  = lastScreenLine.screenID;
-					var screen = this.model.screens[lastScreenID];
+					const lastScreenID  = lastScreenLine.screenID;
+					const screen = this.model.screens[lastScreenID];
 					if(screen){
 
 						/**
 						 * We create here a virtual line...
 						 */
-						var backLine = {
+						const backLine = {
 							id:"back",
 							from : screenID,
 							to : lastScreenID
@@ -658,9 +656,9 @@ export default {
 						/**
 						 * We copy and inverse the animation if there is
 						 */
-						var lastLine = lastScreenLine.line;
+						const lastLine = lastScreenLine.line;
 						if(lastLine){
-							var inverse = this.animationFactory.getInverseAnimation(lastLine.animation);
+							const inverse = this.animationFactory.getInverseAnimation(lastLine.animation);
 							backLine.animation = inverse;
 							backLine.duration = lastLine.duration;
 							backLine.easing = lastLine.easing;
@@ -719,7 +717,7 @@ export default {
 					/**
 					 * We might have a logic widget in here
 					 */
-					let widget = this.model.widgets[line.to];
+					const widget = this.model.widgets[line.to];
 					if(widget){
 						this.logLine(line, screenID);
 						this.executeLogic(screenID, widgetID, widget, line);
@@ -926,7 +924,7 @@ export default {
 			 * We should have an "in" operation
 			 */
 			if (value && Array.isArray(value) && value.length > 0){
-				console.debug("Simualtor.isRuleMatching.isArray", value)
+				console.debug("Simulator.isRuleMatching.isArray", value)
 				value = value[0]
 			}
 

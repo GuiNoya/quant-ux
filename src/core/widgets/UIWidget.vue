@@ -11,6 +11,9 @@ import _Touch from "common/_Touch";
 import Layout from "core/Layout";
 import Gestures from "core/Gestures";
 import Logger from 'common/Logger'
+import on from "dojo/on";
+import touch from "dojo/touch";
+
 
 const styleKeysForResize = [
 			'fontSize',
@@ -45,10 +48,20 @@ export default {
   },
   components: {},
   methods: {
+
+  
+
     /**
      * Is called when in simulator to wire only when needed.
      */
     wireEvents () {},
+
+    wireHover (over = touch.over, out = touch.out) {
+      this.own(on(this.domNode, over, lang.hitch(this, "onDomMouseOver")));
+      this.own(on(this.domNode, out, lang.hitch(this, "onDomMouseOut")));
+    },
+
+   
 
     /**
      * Nmae to be shown in property sections
@@ -65,6 +78,12 @@ export default {
      * Widget can expose here some properties
      */
     getDataProperties () {
+    },
+
+    /**
+     * Widget can expose here some properties
+     */
+    onSimulatoStarted () {
     },
 
     /**
@@ -91,6 +110,7 @@ export default {
       this._scaleY = scaleY;
       this.setStyle(style, model);
     },
+
 
     /*
      * should be called when the widget was scalled, e.g. by
@@ -546,12 +566,11 @@ export default {
     },
 
     hideErrorLabel () {
-      var errorLabels = this.getErrorLabels();
+      const errorLabels = this.getErrorLabels();
 
       if (this.model.props.validation && errorLabels) {
-        for (var i = 0; i < errorLabels.length; i++) {
-          var target = errorLabels[i];
-
+        for (let i = 0; i < errorLabels.length; i++) {
+          const target = errorLabels[i];
           this.emitAnimation(target, this.erroAnimationDuration, {
             opacity: 0
           });
@@ -560,10 +579,10 @@ export default {
     },
 
     showErrorLabel () {
-      var errorLabels = this.getErrorLabels();
+      const errorLabels = this.getErrorLabels();
       if (this.model.props.validation && errorLabels) {
-        for (var i = 0; i < errorLabels.length; i++) {
-          var target = errorLabels[i];
+        for (let i = 0; i < errorLabels.length; i++) {
+          const target = errorLabels[i];
           this.emitAnimation(target, this.erroAnimationDuration, {
             opacity: 1
           });
@@ -736,6 +755,14 @@ export default {
       for (var i = 0; i < this.borderRadius.length; i++) {
         var key = this.borderRadius[i];
         var w = this._getBorderWidth(style[key]);
+        node.style[key] = w + "px";
+      }
+    },
+
+   _setBorderRadiusAt (node, style, borderRadius = []) {
+      for (let i = 0; i < borderRadius.length; i++) {
+        const key = borderRadius[i];
+        const w = this._getBorderWidth(style[key]);
         node.style[key] = w + "px";
       }
     },
